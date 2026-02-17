@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Messages AI ULTRA MAX</title>
+
+<style>
+*{box-sizing:border-box;}
+
+body{
+margin:0;
+background:linear-gradient(160deg,#0f111a,#1c1f2b);
+color:white;
+font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+height:100dvh;
+overflow:hidden;
+display:flex;
+}
+
+/* MENU BUTTON */
+.menu-btn{
+display:none;
+position:fixed;
+top:15px;
+left:15px;
+z-index:3000;
+background:#0a84ff;
+border:none;
+padding:10px 14px;
+border-radius:14px;
+font-size:16px;
+}
+
+/* SIDEBAR */
+.sidebar{
+width:300px;
+background:rgba(28,31,43,0.98);
+backdrop-filter:blur(20px);
+display:flex;
+flex-direction:column;
+border-right:1px solid rgba(255,255,255,0.05);
+transition:0.3s;
+height:100dvh;
+}
+
+.sidebar-header{
+padding:15px;
+font-weight:700;
+font-size:18px;
+display:flex;
+flex-direction:column;
+gap:10px;
+}
+
+.sidebar-header-top{
+display:flex;
+justify-content:space-between;
+align-items:center;
+gap:5px;
+flex-wrap:wrap;
+}
+
+.search-box{
+padding:10px;
+border-radius:12px;
+border:none;
+outline:none;
+width:100%;
+}
+
+.contact-list{
+flex:1;
+overflow-y:auto;
+padding-bottom:80px;
+}
+
+.contact{
+display:flex;
+align-items:center;
+gap:12px;
+padding:14px;
+cursor:pointer;
+transition:0.2s;
+border-bottom:1px solid rgba(255,255,255,0.05);
+}
+
+.contact.active{
+background:#0a84ff;
+}
+
+.contact img{
+width:45px;
+height:45px;
+border-radius:50%;
+object-fit:cover;
+}
+
+/* CHAT */
+.chat-area{
+flex:1;
+display:flex;
+flex-direction:column;
+height:100dvh;
+}
+
+.chat-header{
+padding:15px;
+background:rgba(28,31,43,0.98);
+display:flex;
+justify-content:space-between;
+align-items:center;
+position:sticky;
+top:0;
+z-index:1000;
+}
+
+.chat-actions{
+display:flex;
+gap:5px;
+flex-wrap:wrap;
+}
+
+.chat{
+flex:1;
+padding:15px;
+overflow-y:auto;
+display:flex;
+flex-direction:column;
+gap:12px;
+scroll-behavior:smooth;
+}
+
+.message{
+max-width:85%;
+padding:14px 16px;
+border-radius:22px;
+font-size:14px;
+line-height:1.5;
+word-wrap:break-word;
+animation:fadeIn 0.2s ease;
+}
+
+.timestamp{
+font-size:10px;
+opacity:0.6;
+margin-top:4px;
+}
+
+.user{
+align-self:flex-end;
+background:#0a84ff;
+}
+
+.ai{
+align-self:flex-start;
+background:#2c2c2e;
+}
+
+.input-area{
+display:flex;
+padding:10px;
+padding-bottom:calc(10px + env(safe-area-inset-bottom));
+background:rgba(28,31,43,0.98);
+gap:8px;
+position:sticky;
+bottom:0;
+}
+
+.input-area input{
+flex:1;
+padding:14px;
+border-radius:25px;
+border:none;
+outline:none;
+font-size:14px;
+}
+
+button{
+padding:10px 14px;
+border-radius:20px;
+border:none;
+background:#34c759;
+color:white;
+cursor:pointer;
+font-size:13px;
+white-space:nowrap;
+}
+
+button:active{transform:scale(0.95);}
+.danger{background:#ff3b30;}
+.edit-btn{background:#ff9f0a;}
+
+.modal{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,0.7);
+display:none;
+justify-content:center;
+align-items:center;
+z-index:4000;
+padding:20px;
+}
+
+.modal-content{
+background:#1c1f2b;
+padding:20px;
+border-radius:20px;
+width:100%;
+max-width:400px;
+display:flex;
+flex-direction:column;
+gap:10px;
+max-height:90dvh;
+overflow-y:auto;
+}
+
+@media (max-width:900px){
+.menu-btn{display:block;}
+.sidebar{
+position:fixed;
+left:0;
+top:0;
+transform:translateX(-100%);
+z-index:2500;
+}
+.sidebar.active{transform:translateX(0);}
+}
+</style>
+</head>
+
+<body>
+
+<button class="menu-btn" onclick="toggleSidebar()">☰</button>
+
+<div class="sidebar" id="sidebar">
+<div class="sidebar-header">
+
+<div class="sidebar-header-top">
+<span>Messages AI</span>
+<div>
+<button onclick="openModal()">+</button>
+<button onclick="backupData()">Backup</button>
+<button onclick="importData()">Import</button>
+<button class="danger" onclick="fullReset()">Reset</button>
+</div>
+</div>
+
+<input class="search-box" placeholder="Search contact..." oninput="searchContact(this.value)">
+</div>
+
+<div class="contact-list" id="contactList"></div>
+</div>
+
+<div class="chat-area">
+
+<div class="chat-header">
+<span id="chatHeader">Select Contact</span>
+<div class="chat-actions">
+<button class="edit-btn" onclick="editContact()">Edit</button>
+<button onclick="exportChat()">Export</button>
+<button onclick="resetChat()">Reset Chat</button>
+<button onclick="deleteContact()">Delete</button>
+</div>
+</div>
+
+<div class="chat" id="chat"></div>
+
+<div class="input-area">
+<input id="messageInput" placeholder="Type message..." onkeypress="if(event.key==='Enter')send()">
+<button onclick="send()">Send</button>
+</div>
+
+</div>
+
+<div class="modal" id="modal">
+<div class="modal-content">
+<h3 id="modalTitle">Add AI Contact</h3>
+<label>Foto Profil</label>
+<input type="file" id="photo">
+<label>Nama</label>
+<input id="nameInput">
+<label>Nomor (API Key)</label>
+<input id="apikeyInput">
+<label>Model AI</label>
+<input id="modelInput" placeholder="openai/gpt-4o-mini">
+<label>System Prompt</label>
+<input id="systemPromptInput" placeholder="You are helpful AI...">
+<button onclick="saveContact()">Save</button>
+<button class="danger" onclick="closeModal()">Cancel</button>
+</div>
+</div>
+
+<script>
+
+let contacts = JSON.parse(localStorage.getItem("ai_contacts") || "[]");
+let currentContact = null;
+let editMode = false;
+
+renderContacts();
+
+function toggleSidebar(){
+sidebar.classList.toggle("active");
+}
+
+function openModal(edit=false){
+editMode=edit;
+modal.style.display="flex";
+modalTitle.innerText=edit?"Edit Contact":"Add AI Contact";
+
+if(edit && currentContact){
+nameInput.value=currentContact.name || "";
+apikeyInput.value=currentContact.apikey || "";
+modelInput.value=currentContact.model || "";
+systemPromptInput.value=currentContact.systemPrompt || "";
+}else{
+nameInput.value="";
+apikeyInput.value="";
+modelInput.value="";
+systemPromptInput.value="";
+}
+}
+
+function editContact(){
+if(!currentContact) return alert("Select contact first!");
+openModal(true);
+}
+
+function closeModal(){
+modal.style.display="none";
+}
+
+function saveContact(){
+
+let nameVal=document.getElementById("nameInput").value.trim();
+let apiVal=document.getElementById("apikeyInput").value.trim();
+let modelVal=document.getElementById("modelInput").value.trim();
+let systemVal=document.getElementById("systemPromptInput").value.trim();
+
+if(!nameVal) return alert("Nama wajib diisi!");
+
+let file=document.getElementById("photo").files[0];
+let reader=new FileReader();
+
+reader.onload=function(){
+
+let data={
+id:editMode?currentContact.id:Date.now(),
+name:nameVal,
+apikey:apiVal,
+model:modelVal,
+systemPrompt:systemVal,
+photo:file?reader.result:(editMode?currentContact.photo:""),
+memory:editMode?currentContact.memory:[]
+};
+
+if(editMode){
+contacts=contacts.map(c=>c.id===currentContact.id?data:c);
+currentContact=data;
+}else{
+contacts.push(data);
+}
+
+localStorage.setItem("ai_contacts",JSON.stringify(contacts));
+renderContacts();
+closeModal();
+};
+
+if(file){ reader.readAsDataURL(file); }
+else{ reader.onload(); }
+}
+
+function renderContacts(list=contacts){
+contactList.innerHTML="";
+list.forEach(c=>{
+let div=document.createElement("div");
+div.className="contact"+(currentContact?.id===c.id?" active":"");
+div.innerHTML=`<img src="${c.photo}"><span>${c.name || "No Name"}</span>`;
+div.onclick=()=>{
+openChat(c.id);
+sidebar.classList.remove("active");
+};
+contactList.appendChild(div);
+});
+}
+
+function searchContact(q){
+let filtered=contacts.filter(c=>c.name && c.name.toLowerCase().includes(q.toLowerCase()));
+renderContacts(filtered);
+}
+
+function openChat(id){
+currentContact=contacts.find(c=>c.id===id);
+chatHeader.innerText=currentContact.name+" ("+currentContact.memory.length+" msgs)";
+renderContacts();
+renderChat();
+}
+
+function renderChat(){
+chat.innerHTML="";
+if(!currentContact) return;
+currentContact.memory.forEach(m=>{
+let div=document.createElement("div");
+div.className="message "+m.role;
+div.innerHTML=`${m.content}<div class="timestamp">${m.time}</div>`;
+chat.appendChild(div);
+});
+chat.scrollTop=chat.scrollHeight;
+}
+
+function resetChat(){
+if(!currentContact) return;
+if(confirm("Reset chat?")){
+currentContact.memory=[];
+localStorage.setItem("ai_contacts",JSON.stringify(contacts));
+renderChat();
+}
+}
+
+function deleteContact(){
+if(!currentContact) return;
+if(confirm("Delete contact?")){
+contacts=contacts.filter(c=>c.id!==currentContact.id);
+currentContact=null;
+localStorage.setItem("ai_contacts",JSON.stringify(contacts));
+renderContacts();
+chat.innerHTML="";
+chatHeader.innerText="Select Contact";
+}
+}
+
+function fullReset(){
+if(confirm("FULL RESET ALL DATA?")){
+localStorage.removeItem("ai_contacts");
+contacts=[];
+currentContact=null;
+renderContacts();
+chat.innerHTML="";
+chatHeader.innerText="Select Contact";
+}
+}
+
+function exportChat(){
+if(!currentContact) return;
+let text=currentContact.memory.map(m=>`${m.role}: ${m.content}`).join("\n\n");
+let blob=new Blob([text],{type:"text/plain"});
+let a=document.createElement("a");
+a.href=URL.createObjectURL(blob);
+a.download=currentContact.name+"_chat.txt";
+a.click();
+}
+
+function backupData(){
+let blob=new Blob([JSON.stringify(contacts)],{type:"application/json"});
+let a=document.createElement("a");
+a.href=URL.createObjectURL(blob);
+a.download="backup_ai_contacts.json";
+a.click();
+}
+
+function importData(){
+let input=document.createElement("input");
+input.type="file";
+input.onchange=e=>{
+let reader=new FileReader();
+reader.onload=()=>{
+contacts=JSON.parse(reader.result);
+localStorage.setItem("ai_contacts",JSON.stringify(contacts));
+renderContacts();
+};
+reader.readAsText(e.target.files[0]);
+};
+input.click();
+}
+
+async function send(){
+let text=messageInput.value;
+if(!text||!currentContact) return;
+
+let time=new Date().toLocaleTimeString();
+
+currentContact.memory.push({role:"user",content:text,time});
+renderChat();
+messageInput.value="";
+
+currentContact.memory.push({role:"ai",content:"Typing...",time});
+renderChat();
+
+try{
+let res=await fetch("https://openrouter.ai/api/v1/chat/completions",{
+method:"POST",
+headers:{
+"Authorization":"Bearer "+currentContact.apikey,
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+model:currentContact.model,
+messages:[
+{role:"system",content:currentContact.systemPrompt||""},
+...currentContact.memory.map(m=>({
+role:m.role==="ai"?"assistant":"user",
+content:m.content
+}))
+]
+})
+});
+
+let data=await res.json();
+let reply=data.choices?.[0]?.message?.content||"Error";
+
+currentContact.memory.pop();
+currentContact.memory.push({role:"ai",content:reply,time:new Date().toLocaleTimeString()});
+localStorage.setItem("ai_contacts",JSON.stringify(contacts));
+renderChat();
+
+}catch{
+currentContact.memory.pop();
+currentContact.memory.push({role:"ai",content:"Connection error",time});
+renderChat();
+}
+}
+
+</script>
+
+</body>
+</html>
